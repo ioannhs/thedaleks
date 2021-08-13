@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>daleks</title>
+
+	<link href='./daleks.css' type="text/css" rel="stylesheet" />
+
+	<script src="./libraries/p5.js"></script>
+	<!--- 
+		<script src="./libraries/p5.dom.js"></script>
+	-->	
+		<script src="./libraries/p5.sound.js"></script>
+</head>
+<body>
+	<div class='gameheader'> 
+		<h2>Το Παιχνίδι του Χρήστου</h2>
+	</div>
+	<div class='game-footer'>
+		Μια μικρή απόλαυση για τη στιγμή που διαρκεί ...
+	</div>
+	<div class='left-sidebar '>
+		<div class='flexcenter flexcolumn' id='new-game'>
+			<div>Νέο Παιχνίδι</div>
+		</div>
+		
+		<p>&nbsp;</p>
+		<p>&nbsp;</p>
+		<div class='flexcenter flexcolumn' id='game-info-placeholder'>
+			<div>Εμπειρία</div>
+			<div class='gameinfo' id='level'>0</div>
+			<p>-=---=-</p>
+			<div>Άλματα</div>
+			<div class='gameinfo' id='jumps'>0</div>
+			<p>-=---=-</p>
+			<div>Βόμβες</div>
+			<div class='gameinfo' id='bombs'>0</div>
+		</div>
+	</div>
+
+	<div class='right-sidebar'>
+		<div class='flexcenter flexcolumn' id='score-placeholder'>
+			<div>Score</div>
+			<div class='gameinfo' id='score'>0</div>
+			<p>-=---=-</p>
+			<div>High Score</div>
+			<div class='gameinfo' id='high-score'>0</div>
+		</div>
+	</div>
+</body>
+	<script src="daleks.js"></script>
+</html>
+	

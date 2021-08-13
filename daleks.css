@@ -1,0 +1,96 @@
+
+body {
+    margin:0;
+    margin-left: 0px;
+    margin-top: 0px; 
+    padding:0;
+    overflow: hidden;
+
+    background: rgb(208, 255, 208);
+
+    display: grid;
+    align-content: start;
+    justify-content: start;
+    gap: 1em;
+    row-gap: 1em;
+    column-gap: 1em;
+    grid-template-columns: 10vw auto 10vw auto;
+    grid-template-areas: 
+        'left-gameheader game-header right-gameheader' 
+        'left-sidebar game-canvas right-sidebar' 
+        'game-footer game-footer game-footer';
+}
+
+#johnCanvas {
+    margin: 0px;
+    grid-area: game-canvas;
+
+    background: rgb(192, 255, 192);
+}
+
+.gameheader {
+    grid-area: game-header;
+    grid-column-start: 1;
+    grid-column-end: 4;
+    background: rgb(128, 255, 192);
+}
+
+.gameheader h2 {
+    text-align: center;
+    color: rgb(8, 64, 32);
+}
+
+.game-footer {
+    padding: 10px;
+    grid-area: game-footer;
+    color: rgb(130, 121, 190);
+    background: rgb(128, 255, 192);
+}
+
+.left-sidebar {
+    padding: 10px;
+    grid-area: left-sidebar;
+    background: rgb(192, 255, 192);
+}
+
+.right-sidebar {
+    padding: 10px;
+    grid-area: right-sidebar;
+    background: rgb(192, 255, 192);
+
+}
+
+.flexrow {
+    flex-flow: row;
+}
+
+.flexcolumn {
+    flex-flow: column;
+}
+
+.flexcenter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gameinfo {
+    color: chocolate;
+    font: bolder;
+}
+
+#new-game {
+    height: 30px;
+    
+    font: bold;
+    cursor: pointer;
+    background: rgb(128, 255, 192);
+    border: 1px solid rgb(128, 255, 192);
+}
+
+#new-game:hover {
+    color: slateblue;
+    font: bolder;
+    border: 1px solid rgb(112, 204, 192);
+    /*color: rgb(128, 255, 192);*/
+}
