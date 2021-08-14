@@ -2,6 +2,36 @@
 var DALEKMOVES;
 (function (DALEKMOVES) {
     ;
+    ;
+    ;
+    DALEKMOVES.InnerBombLevel = [
+        { dc: -1, dr: -1 },
+        { dc: 0, dr: -1 },
+        { dc: 1, dr: -1 },
+        { dc: 1, dr: 0 },
+        { dc: 1, dr: 1 },
+        { dc: 0, dr: 1 },
+        { dc: -1, dr: 1 },
+        { dc: -1, dr: 0 },
+    ];
+    DALEKMOVES.OuterBombLevel = [
+        { dc: -2, dr: -2 },
+        { dc: -1, dr: -2 },
+        { dc: 0, dr: -2 },
+        { dc: 1, dr: -2 },
+        { dc: 2, dr: -2 },
+        { dc: 2, dr: -1 },
+        { dc: 2, dr: 0 },
+        { dc: 2, dr: 1 },
+        { dc: 2, dr: 2 },
+        { dc: 1, dr: 2 },
+        { dc: 0, dr: 2 },
+        { dc: -1, dr: 2 },
+        { dc: -2, dr: 2 },
+        { dc: -2, dr: -1 },
+        { dc: -2, dr: 0 },
+        { dc: -2, dr: 1 },
+    ];
     function isDaleksKey(key) {
         switch (key) {
             case 37 /* ArrowLeft */:
@@ -50,6 +80,7 @@ var DALEKMOVES;
             case 103 /* NumberLeftUp */:
                 return 3 /* LeftTop */;
             case 32 /* Space */:
+            case 88 /* Fire */:
                 return 16 /* StayStill */;
         }
         return 0 /* Undefined */;
@@ -200,10 +231,13 @@ var DALEKOPPONENT;
             this.img = img;
         }
         draw(xpos, ypos) {
-            image(this.img, xpos, ypos);
+            if (this.img != null) {
+                image(this.img, xpos, ypos);
+            }
         }
         setDeadImage(img) {
-            delete this.img;
+            // delete this.img; //delete is not "release memory" !!!
+            this.img = null;
             this.img = img;
         }
     }
@@ -231,19 +265,23 @@ var DALEKS;
     const EMPTYSTRING = '';
     const options = DALEKOPTIONS.dalekOptions;
     const isDaleksKey = DALEKMOVES.isDaleksKey;
+    var innerLevels = DALEKMOVES.InnerBombLevel;
+    var outerLevels = DALEKMOVES.OuterBombLevel;
     var Opponent = DALEKOPPONENT.GameOpponent;
     var Pos = INTERFACES.ElementPos;
     var Point = INTERFACES.Point;
     class Daleks {
-        constructor(player, opponentsInfo, jumpImages) {
+        constructor(player, opponentsInfo, jumpImages, bombImages) {
             this.player = player;
             this.opponentsInfo = opponentsInfo;
             this.jumpImages = jumpImages;
+            this.bombImages = bombImages;
             this.gameLevel = 1;
             this.score = 0;
             this.elements = [];
             this.opponents = [];
             this.playerJump = null;
+            this.playerBomb = null;
             this.active = () => this.player.active;
             this.MaxPoint = new Point(options.rowTiles * options.tileSize + options.border, options.colTiles * options.tileSize + options.border);
             this.initializeGame();
@@ -260,8 +298,10 @@ var DALEKS;
             this.setElement(lastPos, player);
         }
         initializeGame() {
-            delete this.opponents;
-            delete this.elements;
+            // delete this.opponents; //delete is not "release memory" !!!
+            // delete this.elements;
+            this.opponents = [];
+            this.elements = [];
             this.gameLevel = 1;
             this.score = 0;
             this.createOpponnets();
@@ -337,7 +377,8 @@ var DALEKS;
             const loopGameLevel = action == 1 /* Control */ && key == 32 /* Space */;
             do {
                 this.playerJump = null;
-                this.movePlayer(this.player, key);
+                this.playerBomb = null;
+                this.movePlayer(this.player, key, action);
                 if (!this.player.active) {
                     //game ends
                     return;
@@ -345,11 +386,11 @@ var DALEKS;
                 this.moveOpponents(this.player);
             } while (!this.checkLevelEnd() && loopGameLevel);
         }
-        movePlayer(player, key) {
+        movePlayer(player, key, action) {
             const elem = this.getElement(player);
             if (!elem)
                 return;
-            const newPos = this.applyMove(elem.pos, key);
+            const newPos = this.applyMove(elem.pos, key, action);
             this.clearElement(elem.element.id);
             if (this.collides(newPos)) {
                 this.endGame(player, newPos);
@@ -410,7 +451,7 @@ var DALEKS;
                 local.col--;
             return local;
         }
-        applyMove(pos, key) {
+        applyMove(pos, key, action) {
             if (key == 32 /* Space */) {
                 return pos;
             }
@@ -420,6 +461,18 @@ var DALEKS;
                     this.startJumping(pos, next);
                     return next;
                 }
+            }
+            if (key == 88 /* Fire */) {
+                let thrown = action == 1 /* Control */ && this.player.throwHyperBomb();
+                let level = 2 /* Hyper */;
+                if (!thrown) {
+                    thrown = this.player.throwBomb();
+                    level = 1 /* Normal */;
+                }
+                if (thrown) {
+                    this.startBombing(pos, level);
+                }
+                return pos;
             }
             let { row, col } = pos; //make a copy
             const move = DALEKMOVES.KeyToDirection(key);
@@ -455,8 +508,10 @@ var DALEKS;
             if (this.activeOpponents())
                 return false;
             const beginPos = new Pos(...this.terrainPos(this.player));
-            delete this.opponents;
-            delete this.elements;
+            // delete this.opponents;
+            // delete this.elements;
+            this.opponents = []; //delete is not "release memory" !!!
+            this.elements = [];
             this.gameLevel++;
             this.player.newLevelBombs();
             this.player.resetJumps();
@@ -472,16 +527,80 @@ var DALEKS;
             for (let i = 0; i < this.opponents.length; i++) {
                 this.drawElement(this.opponents[i]);
             }
-            if (!this.playerJump) {
+            if (!this.playerJump && !this.playerBomb) {
                 this.drawElement(this.player);
             }
-            else {
+            else if (this.playerJump) {
                 this.flyJumpingPlayer();
+            }
+            else if (this.playerBomb) {
+                this.goAroundBomb();
+                this.drawElement(this.player);
+            }
+        }
+        startBombing(pos, level) {
+            //if (!this.bombImages)
+            //    return;
+            if (this.bombImages.length == 0)
+                return;
+            if (level == 0 /* Undefined */)
+                return;
+            this.playerBomb = [];
+            let opp = undefined;
+            for (let i = 0; i < innerLevels.length; i++) {
+                let df = innerLevels[i];
+                let p = new Pos(pos.row + df.dr, pos.col + df.dc);
+                p = this.applyBounds(p);
+                let pt = this.terrainPoint(p);
+                if (!this.playerBomb.some(b => b.pt.x == pt.x && b.pt.y == pt.y)) {
+                    this.playerBomb.push({ pt, img: random(this.bombImages) });
+                    if (!opp) {
+                        opp = this.getPositionedOpponent(p);
+                        if (opp) {
+                            opp.canMove = false;
+                            opp.setDeadImage(this.opponentsInfo[0].img);
+                        }
+                    }
+                    else {
+                        let next = this.getPositionedOpponent(p);
+                        if (next) {
+                            opp.points += next.points;
+                            next.canMove = false;
+                            this.clearElement(next.id);
+                        }
+                    }
+                }
+            }
+            if (level != 2 /* Hyper */)
+                return;
+            for (let i = 0; i < outerLevels.length; i++) {
+                let df = outerLevels[i];
+                let p = new Pos(pos.row + df.dr, pos.col + df.dc);
+                p = this.applyBounds(p);
+                let pt = this.terrainPoint(p);
+                if (!this.playerBomb.some(b => b.pt.x == pt.x && b.pt.y == pt.y)) {
+                    this.playerBomb.push({ pt, img: random(this.bombImages) });
+                    if (!opp) {
+                        opp = this.getPositionedOpponent(p);
+                        if (opp) {
+                            opp.canMove = false;
+                            opp.setDeadImage(this.opponentsInfo[0].img);
+                        }
+                    }
+                    else {
+                        let next = this.getPositionedOpponent(p);
+                        if (next) {
+                            opp.points += next.points;
+                            next.canMove = false;
+                            this.clearElement(next.id);
+                        }
+                    }
+                }
             }
         }
         startJumping(from, to) {
-            if (!this.jumpImages)
-                return;
+            //if (!this.jumpImages)
+            //   return;
             if (this.jumpImages.length == 0)
                 return;
             this.playerJump = [];
@@ -505,12 +624,23 @@ var DALEKS;
         flyJumpingPlayer() {
             if (!this.playerJump)
                 return;
-            if (this.playerJump.length == 0)
-                return;
+            //if (this.playerJump.length == 0) {
+            //    this.playerJump = null;
+            //    return;
+            //}
             const jump = this.playerJump.splice(0, 1);
             this.drawJump(jump[0]);
             if (this.playerJump.length == 0) {
                 this.playerJump = null;
+            }
+        }
+        goAroundBomb() {
+            if (!this.playerBomb)
+                return;
+            const bomb = this.playerBomb.splice(0, 1);
+            this.drawBomb(bomb[0]);
+            if (this.playerBomb.length == 0) {
+                this.playerBomb = null;
             }
         }
         drawJump(jump) {
@@ -518,6 +648,12 @@ var DALEKS;
             const side = floor(options.tileSize * (jump.rate / 100) + options.tileSize);
             image(jump.img, x, y, side, side);
             this.player.drawScaled(x, y, side);
+        }
+        drawBomb(bomb) {
+            const { x, y } = bomb.pt;
+            // const side = floor(options.tileSize * (bomb.rate / 100) + options.tileSize);
+            image(bomb.img, x, y);
+            // this.player.draw(x, y);
         }
         playerPos() {
             const elem = this.getElement(this.player);
@@ -544,24 +680,6 @@ var DALEKS;
         terrainPoint(pos) {
             const x = options.border + pos.col * options.tileSize;
             const y = options.border + pos.row * options.tileSize;
-            return new Point(x, y);
-        }
-        mousePos(pt) {
-            const [x, y] = [...this.applyMouseBounds(pt)];
-            const row = x;
-            const col = y;
-            return new Pos(row, col);
-        }
-        applyMouseBounds(pt) {
-            let { x, y } = pt;
-            if (x < options.border)
-                x = options.border;
-            if (y < options.border)
-                y = options.border;
-            if (x >= this.MaxPoint.x)
-                x = this.MaxPoint.x;
-            if (y >= this.MaxPoint.y)
-                y = this.MaxPoint.y;
             return new Point(x, y);
         }
     }
@@ -738,6 +856,7 @@ let corners;
 let borders;
 let opponents;
 let jumpImages;
+let bombImages;
 let redPlayer;
 let bluePlayer;
 let terrain;
@@ -757,6 +876,7 @@ function preload() {
     borders = preloadBorderImages();
     opponents = preloadOpponentImages();
     jumpImages = preloadJumpImages();
+    bombImages = preloadBombImages();
     redPlayer = loadImage("./images/red-32-gimp-24be.png");
     bluePlayer = loadImage("./images/blue-32-gimp-24bbe.png");
 }
@@ -812,7 +932,7 @@ function newGame() {
     terrain = new TERRAIN.Terrain(corners, borders, grass);
     daleks = new DALEKS.Daleks(new DALEKPLAYER.Player("red", true, [38 /* ArrowUp */, 40 /* ArrowDown */, 37 /* ArrowLeft */, 39 /* ArrowRight */,
         36 /* ArrowLeftUp */, 35 /* ArrowLeftDown */, 33 /* ArrowRightUp */, 34 /* ArrowRightDown */,
-        74 /* Jump */, 88 /* Fire */], redPlayer), DALEKOPPONENT.infoFromImages(opponents), jumpImages);
+        74 /* Jump */, 88 /* Fire */], redPlayer), DALEKOPPONENT.infoFromImages(opponents), jumpImages, bombImages);
     playerDust.reset();
     displayGameInfo();
 }
@@ -905,4 +1025,14 @@ function preloadJumpImages() {
     let jump5 = loadImage("./images/onJump_06.png");
     let jump6 = loadImage("./images/onJump_07.png");
     return [jump0, jump1, jump2, jump3, jump3, jump4, jump5, jump6];
+}
+function preloadBombImages() {
+    let bomb0 = loadImage("./images/onJump_01.png");
+    let bomb1 = loadImage("./images/onJump_02.png");
+    let bomb2 = loadImage("./images/onJump_03.png");
+    let bomb3 = loadImage("./images/onJump_04.png");
+    let bomb4 = loadImage("./images/onJump_05.png");
+    let bomb5 = loadImage("./images/onJump_06.png");
+    let bomb6 = loadImage("./images/onJump_07.png");
+    return [bomb0, bomb1, bomb2, bomb3, bomb3, bomb4, bomb5, bomb6];
 }
