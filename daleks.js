@@ -573,6 +573,7 @@ var DALEKS;
             }
             if (level != 2 /* Hyper */)
                 return;
+            opp = undefined;
             for (let i = 0; i < outerLevels.length; i++) {
                 let df = outerLevels[i];
                 let p = new Pos(pos.row + df.dr, pos.col + df.dc);
@@ -635,13 +636,17 @@ var DALEKS;
             }
         }
         goAroundBomb() {
+            var _a;
             if (!this.playerBomb)
                 return;
-            const bomb = this.playerBomb.splice(0, 1);
-            this.drawBomb(bomb[0]);
-            if (this.playerBomb.length == 0) {
-                this.playerBomb = null;
+            //const bomb = this.playerBomb.splice(0, 1);
+            //this.drawBomb(bomb[0]);
+            for (let i = 0; i < ((_a = this.playerBomb) === null || _a === void 0 ? void 0 : _a.length); i++) {
+                this.drawBomb(this.playerBomb[i]);
             }
+            //if (this.playerBomb.length == 0) {
+            this.playerBomb = null;
+            //}
         }
         drawJump(jump) {
             const { x, y } = jump.pt;
