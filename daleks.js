@@ -251,7 +251,8 @@ var DALEKOPPONENT;
     DALEKOPPONENT.OpponentInfo = OpponentInfo;
     ;
     function infoFromImages(images) {
-        return images.map((img, index) => new OpponentInfo(index, img));
+        var points = [1, 2, 2, 3, 3, 3, 4, 4, 5, 5];
+        return images.map((img, index) => new OpponentInfo(points[index], img));
     }
     DALEKOPPONENT.infoFromImages = infoFromImages;
 })(DALEKOPPONENT || (DALEKOPPONENT = {}));
@@ -311,8 +312,12 @@ var DALEKS;
         createOpponnets() {
             this.opponents = [];
             this.elements = [];
-            for (let level = this.gameLevel; level > 0; level--) {
+            const currentLevel = min(this.gameLevel, this.opponentsInfo.length - 1);
+            for (let level = currentLevel; level > 0; level--) {
                 this.createLevelOpponnets(level);
+            }
+            for (let level = this.gameLevel; level >= this.opponentsInfo.length; level--) {
+                this.createExtraLevelOpponnets(level);
             }
         }
         createLevelOpponnets(level) {
@@ -321,6 +326,14 @@ var DALEKS;
             let initialId = this.opponents.length;
             for (let i = 0; i < items; i++) {
                 const opp = new Opponent('opp' + initialId++, true, this.opponentsInfo[index].points, this.opponentsInfo[index].img);
+                this.opponents.push(opp);
+            }
+        }
+        createExtraLevelOpponnets(level) {
+            let initialId = this.opponents.length;
+            for (let i = 0; i < options.nextLevelOpponents; i++) {
+                const info = random(this.opponentsInfo);
+                const opp = new Opponent('opp' + initialId++, true, info.points, info.img);
                 this.opponents.push(opp);
             }
         }
@@ -1016,10 +1029,15 @@ function preloadBorderImages() {
 function preloadOpponentImages() {
     let opponent0 = loadImage("./images/dead-dalek.png");
     let opponent1 = loadImage("./images/wasp_01.png");
+    let opponent1b = loadImage("./images/wasp_01b.png");
     let opponent2 = loadImage("./images/wasp_02.png");
+    let opponent2a = loadImage("./images/wasp_02a.png");
+    let opponent2c = loadImage("./images/wasp_02c.png");
     let opponent3 = loadImage("./images/wasp_03.png");
+    let opponent3b = loadImage("./images/wasp_03b.png");
     let opponent4 = loadImage("./images/wasp_04.png");
-    return [opponent0, opponent1, opponent2, opponent3, opponent4];
+    let opponent4b = loadImage("./images/wasp_04b.png");
+    return [opponent0, opponent1, opponent1b, opponent2, opponent2a, opponent2c, opponent3, opponent3b, opponent4, opponent4b];
 }
 function preloadJumpImages() {
     let jump0 = loadImage("./images/onJump_01.png");
