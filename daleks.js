@@ -1067,7 +1067,7 @@ function preloadBombImages() {
 }
 function preloadGameSounds() {
     soundFormats('mp3');
-    let jumpSound = loadSound('sounds/jump');
+    let jumpSound = new p5.SoundFile('sounds/jump');
     jumpSound.rate(1.2);
     return [jumpSound];
 }
