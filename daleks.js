@@ -272,11 +272,12 @@ var DALEKS;
     var Pos = INTERFACES.ElementPos;
     var Point = INTERFACES.Point;
     class Daleks {
-        constructor(player, opponentsInfo, jumpImages, bombImages) {
+        constructor(player, opponentsInfo, jumpImages, bombImages, gameSounds) {
             this.player = player;
             this.opponentsInfo = opponentsInfo;
             this.jumpImages = jumpImages;
             this.bombImages = bombImages;
+            this.gameSounds = gameSounds;
             this.gameLevel = 1;
             this.score = 0;
             this.elements = [];
@@ -618,6 +619,9 @@ var DALEKS;
             if (this.jumpImages.length == 0)
                 return;
             this.playerJump = [];
+            if (!this.gameSounds[0].isPlaying()) {
+                this.gameSounds[0].play();
+            }
             const jumpFrom = this.terrainPoint(from);
             const jumpTo = this.terrainPoint(to);
             const ticks = floor(frameRate() * 0.7);
@@ -877,6 +881,7 @@ let jumpImages;
 let bombImages;
 let redPlayer;
 let bluePlayer;
+let gameSounds;
 let terrain;
 let daleks;
 //let theCanvas:  HTMLCanvasElement;
@@ -895,6 +900,7 @@ function preload() {
     opponents = preloadOpponentImages();
     jumpImages = preloadJumpImages();
     bombImages = preloadBombImages();
+    gameSounds = preloadGameSounds();
     redPlayer = loadImage("./images/red-32-gimp-24be.png");
     bluePlayer = loadImage("./images/blue-32-gimp-24bbe.png");
 }
@@ -950,7 +956,7 @@ function newGame() {
     terrain = new TERRAIN.Terrain(corners, borders, grass);
     daleks = new DALEKS.Daleks(new DALEKPLAYER.Player("red", true, [38 /* ArrowUp */, 40 /* ArrowDown */, 37 /* ArrowLeft */, 39 /* ArrowRight */,
         36 /* ArrowLeftUp */, 35 /* ArrowLeftDown */, 33 /* ArrowRightUp */, 34 /* ArrowRightDown */,
-        74 /* Jump */, 88 /* Fire */], redPlayer), DALEKOPPONENT.infoFromImages(opponents), jumpImages, bombImages);
+        74 /* Jump */, 88 /* Fire */], redPlayer), DALEKOPPONENT.infoFromImages(opponents), jumpImages, bombImages, gameSounds);
     playerDust.reset();
     displayGameInfo();
 }
@@ -1058,4 +1064,10 @@ function preloadBombImages() {
     let bomb5 = loadImage("./images/onJump_06.png");
     let bomb6 = loadImage("./images/onJump_07.png");
     return [bomb0, bomb1, bomb2, bomb3, bomb3, bomb4, bomb5, bomb6];
+}
+function preloadGameSounds() {
+    soundFormats('mp3');
+    let jumpSound = loadSound('sounds/jump');
+    jumpSound.rate(1.2);
+    return [jumpSound];
 }
